@@ -1,0 +1,50 @@
+{
+  "name": "Kasir Pro 2.0",
+  "short_name": "Kasir Pro",
+  "description": "Sistem Manajemen Penjualan untuk Toko Sembako dengan Cloud Sync & Offline Mode",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366F1",
+  "orientation": "portrait-primary",
+  "icons": [],
+  "categories": ["business", "productivity"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23f5f5f5' width='540' height='720'/><rect fill='%236366F1' width='540' height='80'/><text x='270' y='50' font-size='24' font-weight='bold' text-anchor='middle' fill='white'>Kasir Pro</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Transaksi Baru",
+      "short_name": "Transaksi",
+      "description": "Mulai transaksi penjualan baru",
+      "url": "/index.html?page=kasir",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%236366F1' width='96' height='96' rx='20'/><text x='48' y='60' font-size='48' text-anchor='middle' fill='white'>+</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Lihat Laporan",
+      "short_name": "Laporan",
+      "description": "Lihat laporan penjualan dan stok",
+      "url": "/index.html?page=laporan",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%236366F1' width='96' height='96' rx='20'/><text x='48' y='60' font-size='48' text-anchor='middle' fill='white'>📊</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

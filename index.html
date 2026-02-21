@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kasir Pro</title>
+    <meta name="description" content="Sistem kasir toko kelontong profesional dengan fitur lengkap, offline mode, dan cloud sync." />
+    <meta name="theme-color" content="#6366F1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Kasir Pro" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="kasir.css" />
+  </head>
+
+  <body>
+    <!-- ════════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════ -->
+    <div id="login-screen" class="login-screen">
+      <div class="login-card">
+        <div class="login-logo">
+          <div class="login-logo-icon">🛒</div>
+          <h1 class="login-title">Kasir Pro</h1>
+          <p class="login-sub">Point of Sale System</p>
+        </div>
+        <div id="login-error" class="login-error" style="display: none"></div>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input id="login-username" class="form-input" type="text" placeholder="Masukkan username" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="login-password" class="form-input" type="password" placeholder="Masukkan password" autocomplete="current-password" />
+        </div>
+        <button class="btn-primary btn-full" onclick="doLogin()" id="btn-login">🔓 Masuk</button>
+        <div class="login-hint">Default: <b>admin</b> / <b>admin123</b> &nbsp;|&nbsp; <b>kasir1</b> / <b>kasir1</b></div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════ -->
+    <div id="app" class="app" style="display: none">
+      <!-- HEADER -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
+          <div class="logo">
+            <div>
+              <div class="logo-name">Kasir Pro</div>
+              <div class="logo-page" id="header-page-name">Dashboard</div>
+            </div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="clock-display">🕐 <span id="clock-display"></span></div>
+          <button class="btn-icon" id="btn-barcode" onclick="openBarcodeScanner()" title="Barcode Scanner (F2)">📷</button>
+          <button class="btn-icon" id="btn-theme" onclick="toggleTheme()" title="Toggle Tema">🌙</button>
+          <div class="user-chip" id="user-chip">
+            <span id="user-avatar">👤</span>
+            <span id="user-name-display">-</span>
+          </div>
+          <button class="btn-icon btn-logout" onclick="doLogout()" title="Keluar">🚪</button>
+        </div>
+      </header>
+
+      <!-- BODY -->
+      <div class="app-body" id="app-body">
+        <!-- SIDEBAR -->
+        <nav class="sidebar" id="sidebar">
+          <div class="nav-items">
+            <button class="nav-item active" id="nav-pos" onclick="showPage('pos')" title="Kasir"><span class="nav-icon">🛒</span><span class="nav-label">Kasir</span></button>
+            <button class="nav-item" id="nav-history" onclick="showPage('history')" title="Riwayat"><span class="nav-icon">📋</span><span class="nav-label">Riwayat</span></button>
+            <button class="nav-item" id="nav-reports" onclick="showPage('reports')" title="Laporan"><span class="nav-icon">📊</span><span class="nav-label">Laporan</span></button>
+            <button class="nav-item" id="nav-stock" onclick="showPage('stock')" title="Stok">
+              <span class="nav-icon">📦</span><span class="nav-label">Stok</span>
+              <span class="nav-badge" id="stock-badge" style="display: none">!</span>
+            </button>
+            <button class="nav-item nav-admin" id="nav-users" onclick="showPage('users')" title="Pengguna"><span class="nav-icon">👤</span><span class="nav-label">Pengguna</span></button>
+            <button class="nav-item" id="nav-settings" onclick="showPage('settings')" title="Pengaturan"><span class="nav-icon">⚙️</span><span class="nav-label">Pengaturan</span></button>
+          </div>
+        </nav>
+
+        <!-- CONTENT -->
+        <main class="content">
+          <!-- ── PAGE: POS ── -->
+          <div class="page active" id="page-pos">
+            <div class="pos-layout">
+              <!-- Products Side -->
+              <div class="pos-products">
+                <div class="pos-search-bar">
+                  <div class="search-wrap">
+                    <span class="s-icon">🔍</span>
+                    <input id="prod-search" class="search-input" type="text" placeholder="Cari produk atau scan barcode..." autocomplete="off" />
+                  </div>
+                </div>
+                <div class="category-bar" id="category-bar"></div>
+                <div class="product-grid-wrap" id="product-grid-wrap"></div>
+              </div>
+
+              <!-- Cart Side -->
+              <div class="pos-cart" id="pos-cart">
+                <!-- Mobile drag handle -->
+                <div class="cart-handle" onclick="closeMobileCart()"></div>
+                <div class="cart-top">
+                  <div class="cart-title">🛍️ Keranjang <span class="badge-count" id="cart-count">0</span></div>
+                </div>
+                <div class="cart-items" id="cart-items">
+                  <div class="cart-empty" id="cart-empty">
+                    <div style="font-size: 36px; opacity: 0.4">🛒</div>
+                    <div style="margin-top: 8px">Keranjang kosong</div>
+                  </div>
+                </div>
+
+                <!-- Discount -->
+                <div class="cart-section">
+                  <div class="cart-section-title">🏷️ Diskon</div>
+                  <div class="discount-row">
+                    <select id="disc-type" class="form-select form-input-sm">
+                      <option value="pct">%</option>
+                      <option value="fix">Rp</option>
+                    </select>
+                    <input id="disc-value" class="form-input form-input-sm" type="number" min="0" placeholder="0" oninput="updateDiscount()" />
+                    <button class="btn-sm btn-outline" onclick="clearDiscount()">✕</button>
+                  </div>
+                  <div id="disc-display" class="disc-display" style="display: none"></div>
+                </div>
+
+                <!-- Totals -->
+                <div class="cart-footer">
+                  <div class="summary-row"><span>Subtotal</span><span id="subtotal-display">Rp 0</span></div>
+                  <div class="summary-row" id="disc-row" style="display: none"><span>Diskon</span><span id="disc-amount-display" class="text-red">- Rp 0</span></div>
+                  <div class="summary-total"><span>TOTAL</span><span id="total-display" class="text-green">Rp 0</span></div>
+                  <div class="bayar-section">
+                    <label class="form-label">💵 Uang Bayar</label>
+                    <input id="bayar-input" class="form-input bayar-input" type="text" inputmode="numeric" placeholder="Masukkan jumlah..." oninput="formatBayarInput()" />
+                    <div class="kembalian-row">
+                      <span class="text-muted">Kembalian</span>
+                      <span id="kembalian-display" class="text-yellow fw700">Rp 0</span>
+                    </div>
+                    <div class="quick-amounts" id="quick-amounts"></div>
+                  </div>
+                  <button class="btn-primary btn-full mt8" onclick="processPayment()">⚡ Bayar Sekarang</button>
+                  <button class="btn-outline btn-full mt4" onclick="clearCart()">🗑️ Batal</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── PAGE: HISTORY ── -->
+          <div class="page" id="page-history">
+            <div class="page-header">
+              <h2 class="page-title">📋 Riwayat Transaksi</h2>
+              <div class="page-actions">
+                <input id="hist-search" class="form-input form-input-sm" type="text" placeholder="Cari transaksi..." oninput="renderHistory()" />
+                <input id="hist-date" class="form-input form-input-sm" type="date" onchange="renderHistory()" />
+                <button class="btn-sm btn-outline" onclick="clearHistoryFilters()">Reset</button>
+              </div>
+            </div>
+            <div class="stat-cards" id="hist-stats"></div>
+            <div class="table-wrap">
+              <table class="data-table" id="hist-table">
+                <thead>
+                  <tr>
+                    <th>No. Transaksi</th>
+                    <th>Tanggal & Jam</th>
+                    <th>Kasir</th>
+                    <th>Item</th>
+                    <th>Total</th>
+                    <th>Bayar</th>
+                    <th>Kembalian</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="hist-tbody"></tbody>
+              </table>
+              <div class="table-empty" id="hist-empty" style="display: none">Belum ada transaksi</div>
+            </div>
+          </div>
+
+          <!-- ── PAGE: REPORTS ── -->
+          <div class="page" id="page-reports">
+            <div class="page-header">
+              <h2 class="page-title">📊 Laporan Penjualan</h2>
+              <div class="page-actions">
+                <select id="report-period" class="form-select form-input-sm" onchange="renderReports()">
+                  <option value="today">Hari Ini</option>
+                  <option value="week" selected>7 Hari Terakhir</option>
+                  <option value="month">30 Hari Terakhir</option>
+                </select>
+              </div>
+            </div>
+            <div class="stat-cards" id="report-stats"></div>
+            <div class="charts-grid">
+              <div class="chart-card">
+                <div class="chart-card-title">📈 Pendapatan Harian</div>
+                <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-card-title">🏆 Produk Terlaris</div>
+                <div class="chart-wrap"><canvas id="chart-top"></canvas></div>
+              </div>
+            </div>
+            <div class="top-products-table">
+              <h3 class="section-title-sm">📦 Detail Produk Terlaris</h3>
+              <table class="data-table" id="top-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Produk</th>
+                    <th>Qty Terjual</th>
+                    <th>Total Pendapatan</th>
+                  </tr>
+                </thead>
+                <tbody id="top-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ── PAGE: STOCK ── -->
+          <div class="page" id="page-stock">
+            <div class="page-header">
+              <h2 class="page-title">📦 Manajemen Stok & Produk</h2>
+              <div class="page-actions">
+                <input id="stock-search" class="form-input form-input-sm" type="text" placeholder="Cari produk..." oninput="renderStock()" />
+                <select id="stock-filter" class="form-select form-input-sm" onchange="renderStock()">
+                  <option value="all">Semua</option>
+                  <option value="low">Stok Rendah ⚠️</option>
+                  <option value="empty">Habis 🚫</option>
+                </select>
+                <button class="btn-sm btn-outline" onclick="openAddCategoryModal()">+ Kategori</button>
+                <button class="btn-sm btn-primary" onclick="openAddProductModal()">+ Produk</button>
+                <button class="btn-sm btn-outline" onclick="resetAllStock()">🔄 Reset Stok</button>
+              </div>
+            </div>
+            <div id="stock-alerts-banner" class="alerts-banner" style="display: none"></div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Barcode</th>
+                    <th>Produk</th>
+                    <th>Kategori</th>
+                    <th>Harga</th>
+                    <th>Stok</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="stock-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ── PAGE: USERS ── -->
+          <div class="page" id="page-users">
+            <div class="page-header">
+              <h2 class="page-title">👤 Manajemen Pengguna</h2>
+              <button class="btn-sm btn-primary" onclick="openAddUser()">+ Tambah Pengguna</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nama</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="users-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ── PAGE: SETTINGS ── -->
+          <div class="page" id="page-settings">
+            <div class="page-header">
+              <h2 class="page-title">⚙️ Pengaturan</h2>
+            </div>
+            <div class="settings-grid">
+              <div class="settings-card">
+                <div class="settings-card-title">🎨 Tema Tampilan</div>
+                <div class="settings-card-body">
+                  <div class="theme-options">
+                    <button class="theme-btn" id="theme-dark-btn" onclick="setTheme('dark')">🌙 Mode Gelap</button>
+                    <button class="theme-btn" id="theme-light-btn" onclick="setTheme('light')">☀️ Mode Terang</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-card-title">💾 Backup & Restore</div>
+                <div class="settings-card-body">
+                  <p class="settings-desc">Export semua data (transaksi, stok, produk) ke file JSON.</p>
+                  <div class="settings-actions">
+                    <button class="btn-primary btn-sm" onclick="exportData()">📥 Export Data</button>
+                    <label class="btn-outline btn-sm" style="cursor: pointer">
+                      📤 Import Data
+                      <input type="file" accept=".json" style="display: none" onchange="importData(event)" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-card-title">📦 Harga Produk</div>
+                <div class="settings-card-body">
+                  <p class="settings-desc">Edit harga produk. Perubahan langsung tersimpan.</p>
+                  <input id="price-search" class="form-input form-input-sm" type="text" placeholder="Cari produk untuk edit harga..." oninput="renderPriceEditor()" />
+                  <div id="price-editor-list" style="margin-top: 10px; max-height: 300px; overflow-y: auto"></div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-card-title">🔍 Barcode Scanner</div>
+                <div class="settings-card-body">
+                  <p class="settings-desc">Tekan <kbd>F2</kbd> atau klik tombol 📷 di header untuk membuka mode scan barcode. Barcode produk ditampilkan di halaman Stok.</p>
+                  <button class="btn-outline btn-sm mt8" onclick="openBarcodeScanner()">📷 Buka Scanner</button>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-card-title">🗑️ Reset Data</div>
+                <div class="settings-card-body">
+                  <p class="settings-desc text-red">Hapus semua data transaksi dan riwayat. Aksi ini tidak bisa dibatalkan!</p>
+                  <button class="btn-danger btn-sm mt8" onclick="resetAllTransactions()">🗑️ Hapus Semua Transaksi</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- ── MOBILE: Cart Backdrop Overlay ── -->
+      <div class="cart-overlay" id="cart-overlay" onclick="closeMobileCart()"></div>
+
+      <!-- ── MOBILE: Floating Cart Button ── -->
+      <button class="cart-fab" id="cart-fab" onclick="toggleMobileCart()" style="display: none">🛒 <span class="cart-fab-badge" id="cart-fab-badge">0 item</span></button>
+
+      <!-- ── MOBILE: Bottom Navigation ── -->
+      <nav class="mobile-nav" id="mobile-nav">
+        <button class="mobile-nav-item active" id="mnav-pos" onclick="mobileNav('pos')"><span class="mnav-icon">🛒</span><span>Kasir</span></button>
+        <button class="mobile-nav-item" id="mnav-history" onclick="mobileNav('history')"><span class="mnav-icon">📋</span><span>Riwayat</span></button>
+        <button class="mobile-nav-item" id="mnav-reports" onclick="mobileNav('reports')"><span class="mnav-icon">📊</span><span>Laporan</span></button>
+        <button class="mobile-nav-item" id="mnav-stock" onclick="mobileNav('stock')">
+          <span class="mnav-icon">📦</span><span>Stok</span>
+          <span class="mobile-nav-badge" id="mnav-stock-badge" style="display: none">!</span>
+        </button>
+        <button class="mobile-nav-item" id="mnav-settings" onclick="mobileNav('settings')"><span class="mnav-icon">⚙️</span><span>Lainnya</span></button>
+      </nav>
+    </div>
+
+    <!-- ════════════════════════════════════════
+     MODALS
+════════════════════════════════════════ -->
+
+    <!-- Receipt Modal -->
+    <div class="modal-overlay" id="modal-receipt">
+      <div class="modal">
+        <div class="modal-header">
+          <div style="font-size: 44px">✅</div>
+          <div class="modal-title text-green">Pembayaran Berhasil!</div>
+          <div class="text-muted" id="receipt-date" style="font-size: 12px"></div>
+        </div>
+        <hr class="divider" />
+        <div class="receipt-meta" id="receipt-meta"></div>
+        <hr class="divider" />
+        <div id="receipt-items-list"></div>
+        <hr class="divider" />
+        <div class="receipt-totals" id="receipt-totals"></div>
+        <hr class="divider" />
+        <div style="text-align: center; font-size: 11px; color: var(--muted)">Terima kasih telah berbelanja! 🙏</div>
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="closeModal('modal-receipt')">Tutup</button>
+          <button class="btn-primary" onclick="printReceipt()">🖨️ Cetak Struk</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reprint Modal -->
+    <div class="modal-overlay" id="modal-reprint">
+      <div class="modal">
+        <div class="modal-header">
+          <div style="font-size: 32px">🖨️</div>
+          <div class="modal-title">Cetak Ulang Struk</div>
+        </div>
+        <hr class="divider" />
+        <div id="reprint-content"></div>
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="closeModal('modal-reprint')">Tutup</button>
+          <button class="btn-primary" onclick="window.print()">🖨️ Cetak</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal-overlay" id="modal-add-user">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title">👤 Tambah Pengguna</div>
+        </div>
+        <div class="form-group mt12">
+          <label class="form-label">Nama Lengkap *</label>
+          <input id="user-form-name" class="form-input" type="text" placeholder="Nama lengkap" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input id="user-form-username" class="form-input" type="text" placeholder="Username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input id="user-form-password" class="form-input" type="password" placeholder="Password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select id="user-form-role" class="form-select">
+            <option value="kasir">Kasir</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="closeModal('modal-add-user')">Batal</button>
+          <button class="btn-primary" onclick="saveUser()">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add / Edit Product Modal -->
+    <div class="modal-overlay" id="modal-product-form">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title" id="product-form-title">🏪 Tambah Produk</div>
+        </div>
+        <div class="form-group mt12">
+          <label class="form-label">Nama Produk *</label>
+          <input id="pf-name" class="form-input" type="text" placeholder="Nama produk" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategori *</label>
+          <select id="pf-cat" class="form-select"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Harga (Rp) *</label>
+          <input id="pf-price" class="form-input" type="text" inputmode="numeric" placeholder="Contoh: 5.000" oninput="formatPriceInput('pf-price')" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stok Awal</label>
+          <input id="pf-stock" class="form-input" type="number" min="0" placeholder="50" value="50" />
+        </div>
+        <input type="hidden" id="pf-edit-key" value="" />
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="closeModal('modal-product-form')">Batal</button>
+          <button class="btn-primary" onclick="saveProduct()" id="btn-save-product">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal-overlay" id="modal-category-form">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title">📁 Tambah Kategori</div>
+        </div>
+        <div class="form-group mt12">
+          <label class="form-label">Nama Kategori *</label>
+          <input id="cf-name" class="form-input" type="text" placeholder="Nama kategori" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji / Ikon</label>
+          <input id="cf-emoji" class="form-input" type="text" placeholder="🛒" maxlength="4" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="closeModal('modal-category-form')">Batal</button>
+          <button class="btn-primary" onclick="saveCategory()">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal-overlay" id="modal-delete-confirm">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div style="font-size: 40px">⚠️</div>
+          <div class="modal-title text-red">Hapus Produk?</div>
+          <div class="text-muted" id="delete-confirm-msg" style="font-size: 13px; margin-top: 6px"></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="closeModal('modal-delete-confirm')">Batal</button>
+          <button class="btn-danger" id="btn-confirm-delete" onclick="">Ya, Hapus</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barcode Scanner Modal -->
+    <div class="modal-overlay" id="modal-barcode">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div style="font-size: 36px">📷</div>
+          <div class="modal-title">Scan Barcode</div>
+          <div class="text-muted" style="font-size: 12px; margin-top: 4px">Arahkan scanner ke barcode produk</div>
+        </div>
+        <div class="form-group mt12">
+          <label class="form-label">Barcode</label>
+          <input id="barcode-input-field" class="form-input" type="text" placeholder="Ketik atau scan barcode..." autofocus />
+        </div>
+        <div id="barcode-result" style="margin-top: 8px; min-height: 40px"></div>
+        <div class="modal-actions">
+          <button class="btn-outline" onclick="closeModal('modal-barcode')">Tutup</button>
+          <button class="btn-primary" onclick="processBarcodeInput()">Tambah ke Keranjang</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Print style -->
+    <style>
+      @media print {
+        body > *:not(#modal-receipt):not(#modal-reprint) {
+          display: none !important;
+        }
+
+        #modal-receipt,
+        #modal-reprint {
+          display: block !important;
+          position: static !important;
+          background: none !important;
+        }
+
+        #modal-receipt .modal,
+        #modal-reprint .modal {
+          box-shadow: none;
+          border: none;
+          width: 100%;
+          max-width: 100%;
+          border-radius: 0;
+        }
+
+        .modal-actions {
+          display: none !important;
+        }
+      }
+    </style>
+
+    <script src="kasir-data.js"></script>
+    <script src="kasir.js"></script>
+    
+    <!-- Service Worker Registration for PWA -->
+    <script>
+      // Register Service Worker for offline capability
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then((registration) => {
+              console.log('Service Worker registered successfully:', registration);
+              
+              // Check for updates periodically
+              setInterval(() => {
+                registration.update();
+              }, 60000); // Check every minute
+            })
+            .catch((error) => {
+              console.warn('Service Worker registration failed:', error);
+            });
+        });
+      }
+
+      // Detect when a new Service Worker is ready
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('Service Worker updated');
+          // Optionally notify user about app update
+        });
+      }
+
+      // Prevent pull-to-refresh on mobile (to avoid accidental data loss)
+      let lastY = 0;
+      document.addEventListener('touchstart', (e) => {
+        lastY = e.touches[0].clientY;
+      });
+      document.addEventListener('touchmove', (e) => {
+        const currentY = e.touches[0].clientY;
+        if (currentY > lastY && window.scrollY === 0) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+    </script>
+  </body>
+</html>
